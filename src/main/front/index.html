@@ -1,0 +1,169 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organizador de Estudos</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<h1>Organizador de Estudos</h1>
+<p>Organize suas matérias, planeje seu tempo e alcance seus objetivos!</p>
+
+<div id="container">
+
+    <h3>Cadastrar matéria</h3>
+    <p>Adicione uma nova matéria para organizar seus estudos.</p>
+
+    <form id="form">
+
+        <label for="nome">Nome da matéria</label>
+        <input type="text" id="nome" placeholder="Ex: Programação" required>
+
+        <label for="horas">Horas de estudo</label>
+        <input type="time" id="horas" required>
+
+        <label for="prioridade">Prioridade</label>
+        <select id="prioridade" required>
+            <option value="">Selecione a prioridade</option>
+            <option value="BAIXA">Baixa</option>
+            <option value="MEDIA">Média</option>
+            <option value="ALTA">Alta</option>
+        </select>
+
+        <label for="descricao">Descrição</label>
+        <textarea id="descricao"
+                  placeholder="Descreva sobre a matéria, objetivos e conteúdos principais..."
+                  required></textarea>
+
+        <button type="submit">Adicionar Matéria</button>
+
+    </form>
+
+    <div id="minhas-materias">
+
+        <h3>Minhas Matérias</h3>
+
+        <div id="lista-materias">
+            Carregando matérias...
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+    const API = "http://localhost:8080/estudos";
+
+    // BUSCAR MATÉRIAS (GET)
+    async function carregarMaterias() {
+
+        const lista = document.getElementById("lista-materias");
+
+        try {
+
+            const resposta = await fetch(API);
+
+            if (!resposta.ok) {
+                throw new Error("Erro ao buscar matérias.");
+            }
+
+            const materias = await resposta.json();
+
+            lista.innerHTML = "";
+
+            if (materias.length === 0) {
+                lista.innerHTML = "<p>Nenhuma matéria cadastrada.</p>";
+                return;
+            }
+
+            materias.forEach(materia => {
+
+                const card = document.createElement("div");
+                card.classList.add("card-materia");
+
+                const titulo = document.createElement("h4");
+                titulo.textContent = materia.nome;
+
+                const horas = document.createElement("p");
+                horas.textContent = "Horas: " + (materia.horas ?? "Não informado");
+
+                const prioridade = document.createElement("p");
+                prioridade.textContent = "Prioridade: " + materia.prioridade;
+
+                const descricao = document.createElement("p");
+                descricao.textContent = materia.descricao;
+
+                card.appendChild(titulo);
+                card.appendChild(horas);
+                card.appendChild(prioridade);
+                card.appendChild(descricao);
+
+                lista.appendChild(card);
+
+            });
+
+        } catch (erro) {
+
+            lista.innerHTML = "<p>Erro ao carregar matérias.</p>";
+            console.error(erro);
+
+        }
+
+    }
+
+    // CADASTRAR MATÉRIA (POST)
+    document.getElementById("form").addEventListener("submit", async function(event) {
+
+        event.preventDefault();
+
+        const materia = {
+            nome: document.getElementById("nome").value,
+            horas: document.getElementById("horas").value,
+            prioridade: document.getElementById("prioridade").value,
+            descricao: document.getElementById("descricao").value
+        };
+
+        try {
+
+            const resposta = await fetch(API, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(materia)
+            });
+
+            const resultado = await resposta.text();
+
+            if (!resposta.ok) {
+                throw new Error("Erro " + resposta.status + ": " + resultado);
+            }
+
+            alert("Matéria adicionada com sucesso!");
+
+            document.getElementById("form").reset();
+
+            await carregarMaterias();
+
+        } catch (erro) {
+
+            alert(erro.message);
+            console.error(erro);
+
+        }
+
+    });
+
+    // CARREGAR AO ABRIR A PÁGINA
+    carregarMaterias();
+
+</script>
+
+</body>
+</html>
